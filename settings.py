@@ -15,6 +15,10 @@ class BaseConfig(object):
     mylogger_weibo = logging.getLogger("m2k_weibo")
     mylogger_weixin = logging.getLogger("m2k_weixin")
     mylogger_news = logging.getLogger("m2k_news")
+    mylogger_weibo.setLevel(log_level)
+    mylogger_weixin.setLevel(log_level)
+    mylogger_news.setLevel(log_level)
+
     ch = logging.StreamHandler()
     ch.setFormatter(logging.Formatter(log_format))
     ch.setLevel(logging.INFO)
