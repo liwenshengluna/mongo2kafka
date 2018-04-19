@@ -37,6 +37,18 @@ class BaseConfig(object):
     fh.setLevel(log_level)
     mylogger_news.addHandler(fh)
 
+    OBS_ON = True #默认打开
+    OBS_AK = "FNWTWJJRI5BWKVUPJ1C7"
+    OBS_SK = "OZvynXG2kyqCHCx6Kb9mpmtYJI0VEHiqweCMOpZW"
+    OBS_ISSECURE = False
+    OBS_SERVER = "obs.cn-north-1.myhwclouds.com" #域名
+    OBS_SIGNATURE = "v4" #认证版本
+    OBS_REGION = "beijing" #区域
+    OBS_MD5 = None #加密方式
+    OBS_ACL = "public-read" #对象读取权限
+    OBS_LOCATION = "http://inewsengine.com"
+    OBS_BUCKETNAME = "obs-inews-01" #缺省桶名称
+
     MONGO_CONFIG = {
         "host": "114.115.148.216",
         "port": 27025,
