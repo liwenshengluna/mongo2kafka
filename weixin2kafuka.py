@@ -278,10 +278,9 @@ class Weixin2Kafuka(object):
         retv_item["webpage_code"] = self.hash_util(retv_item["webpage_url"])
         # self.process_image(img_group_list, i, retv_item["webpage_code"], len(img_group_list))
         retv_item["release_datetime"] = item.get("release_datetime", "")
-        retv_item["source_crawl"] = item.get("source_crawl", "微信")
-        retv_item["crawl_datetime"] = item.get("crawl_datetime", "")
         retv_item["wechat_name"] = item.get("wechat_name", "")
-        retv_item["crawl_datetime"] = item.get("crawl_datetime", "")
+        # retv_item["crawl_datetime"] = item.get("crawl_datetime", "")
+        retv_item["crawl_datetime"] = datetime.datetime.today().strftime('%Y-%m-%d %H:%M:%S')
         retv_item["source_report"] = item.get("source_report", "")
         retv_item["region"] = item.get("region", "")
         retv_item["reposts_num"] = int(item["reposts_num"]) if item["reposts_num"] else 0
