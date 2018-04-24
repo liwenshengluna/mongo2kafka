@@ -25,7 +25,9 @@ requests.packages.urllib3.disable_warnings()
 import redis
 from settings import get_settings_environment
 
-_env = get_settings_environment("dev")
+from get_tld import parse_domain
+
+_env = get_settings_environment("pro")
 mylogger_news = _env.mylogger_news
 
 
@@ -79,7 +81,7 @@ class News2Kafuka(object):
             with open(_env.READ_FILE_DIR + file_name, "r") as f:
                 reader = csv.reader(f)
                 for row in reader:
-                    if len(row) != 10:
+                    if len(row) < 10:
                         continue
                     retv_dict = {}
                     title = ""
@@ -159,7 +161,7 @@ if __name__ == '__main__':
                         except Exception as e:
                             mylogger_news.exception("error is %s", e)
                         mylogger_news.info("send kafuka sucess webpage_code is %s", item["webpage_code"])
-                        time.sleep(1)
+                        time.sleep(0.1)
                     except Exception as e:
                         mylogger_news.exception("error is %s", e)
             os.system("mv %s %s " % (_env.READ_FILE_DIR + i, _env.BACKUP_FILE_DIR))

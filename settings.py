@@ -75,8 +75,10 @@ class BaseConfig(object):
         "password": None,
     }
     REDIS_DISTINCT_KEY = "webpage_urls"
-    READ_FILE_DIR = "/data/news_file_data/ready_file/"
-    BACKUP_FILE_DIR = "/data/news_file_data/backup_file/"
+    # READ_FILE_DIR = "/data/news_file_data/ready_file/"
+    READ_FILE_DIR = "/inews/crawler/data/news_file_data/ready_file/"
+    # BACKUP_FILE_DIR = "/data/news_file_data/backup_file/"
+    BACKUP_FILE_DIR = "/inews/crawler/data/news_file_data/backup_file"
 
     NEW_DETAIL_MUST_FIELD = []
 
