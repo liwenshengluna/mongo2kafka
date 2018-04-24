@@ -146,10 +146,10 @@ class Weixin2Kafuka(object):
             im = Image.open(img_path)
             width, height = im.size
             image_form = im.format
-            im.close()
         except Exception as e:
             mylogger_weixin.exception("error is %s", e)
         finally:
+            im.close()
             return size, width, height, image_form
 
     def save_image(self, img_list, user_id, article_id):

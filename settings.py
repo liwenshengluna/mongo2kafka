@@ -85,9 +85,9 @@ class BaseConfig(object):
     KAFUKA_HOST = "10.50.1.197:19092,10.50.1.202:19092, 10.50.1.198:19092"
     KAFUKA_PORT = 9092
 
-    SAVEDIRPATH = "/inews/crawler_lws/mongo2kafuka/save_image_%s" % str(datetime.datetime.today().date()).replace("-",
+    SAVEDIRPATH = "/inews/crawler_lws/mongo2kafka/save_image_%s" % str(datetime.datetime.today().date()).replace("-",
                                                                                                                   "_")
-    SAVEDIRPATH_WEIXIN = "/inews/crawler_lws/mongo2kafuka/save_image_weixin_%s" % str(
+    SAVEDIRPATH_WEIXIN = "/inews/crawler_lws/mongo2kafka/save_image_weixin_%s" % str(
         datetime.datetime.today().date()).replace("-", "_")
     OBS_ON = True  # 测试环境对象存储关闭
     OBJECT_STORE = {
