@@ -143,7 +143,7 @@ class Weibo2Kafuka(object):
             width, height = im.size
             image_form = im.format
         except Exception as e:
-            mylogger_weixin.exception("error is %s", e)
+            mylogger_weibo.exception("error is %s", e)
         finally:
             im.close()
             return size, width, height, image_form
