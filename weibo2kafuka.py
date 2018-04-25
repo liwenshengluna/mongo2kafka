@@ -91,8 +91,8 @@ class Weibo2Kafuka(object):
         :return: 生成器
         '''
         try:
-            _collection = self.mongo.get_collection(name=collection)
-            res_cursor = _collection.find({"flag": {"$ne": 1}})
+            _collection = self.mongo.get_collection(name=collection, )
+            res_cursor = _collection.find({"flag": {"$ne": 1}}, no_cursor_timeout=True)
             for i in res_cursor:
                 yield i
         except Exception as e:
@@ -372,18 +372,19 @@ class Weibo2Kafuka(object):
 
 
 if __name__ == '__main__':
-    w2k = Weibo2Kafuka()
-    # print(mongo_db.fomat_time_partial("昨天 11:53"))
-    today_str = str(datetime.datetime.today().date()).replace("-", "_")
-    collection_name = "weiboCreateByShark_weiboSpider_weibo_shark_%s" % today_str
-    collection_name = "weiboCreateByShark_weiboSpider_shark_2018_04_22"
     while True:
+        w2k = Weibo2Kafuka()
+        # print(mongo_db.fomat_time_partial("昨天 11:53"))
+        today_str = str(datetime.datetime.today().date()).replace("-", "_")
+        collection_name = "weiboCreateByShark_weiboSpider_weibo_shark_%s" % today_str
+        collection_name = "weiboCreateByShark_weiboSpider_shark_2018_04_22"
         res = w2k.get_item(collection_name)
         for i in res:
             temp_status = True
             item = w2k.change(i)
             if not item:
                 mylogger_weibo.info("weibo info in redis id is %s", str(i["_id"]))
+                w2k.update(i["_id"], collection_name)
                 continue
             for key in _env.post_detail_must_key_list:
                 if not item[key]:
