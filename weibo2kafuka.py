@@ -143,10 +143,10 @@ class Weibo2Kafuka(object):
             im = Image.open(img_path)
             width, height = im.size
             image_form = im.format
+            im.close()
         except Exception as e:
             mylogger_weibo.exception("error is %s", e)
         finally:
-            im.close()
             return size, width, height, image_form
 
     def save_image(self, img_list, user_id, article_id):
@@ -166,7 +166,7 @@ class Weibo2Kafuka(object):
             temp_number = idx + 1
             temp_str = url + "||||" + str(temp_number) + "||||" + user_id + "||||" + article_id
             task_list.append(temp_str.strip())
-        pool = ThreadPool(2)
+        pool = ThreadPool()
         retv_list = pool.map(self.downloader_and_up_img, task_list)
         pool.close()
         pool.join()
