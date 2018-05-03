@@ -204,6 +204,7 @@ class DevelopmentConfig(BaseConfig):
         "db_distinct": "14",
         "password": None,
     }
+    SAVEDIRPATH = r"E:\save_image_%s" % str(datetime.datetime.today().date()).replace("-", "_")
 
     KAFUKA_HOST = "10.50.1.197:19092,10.50.1.202:19092, 10.50.1.198:19092"
 

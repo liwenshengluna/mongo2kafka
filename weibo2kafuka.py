@@ -16,6 +16,7 @@ import hashlib
 import socket
 import os
 import time
+from multiprocessing.dummy import Pool as ThreadPool
 
 from PIL import Image
 import pymongo
@@ -90,8 +91,8 @@ class Weibo2Kafuka(object):
         :return: 生成器
         '''
         try:
-            _collection = self.mongo.get_collection(name=collection)
-            res_cursor = _collection.find({"flag": {"$ne": 1}})
+            _collection = self.mongo.get_collection(name=collection, )
+            res_cursor = _collection.find({"flag": {"$ne": 1}}, no_cursor_timeout=True)
             for i in res_cursor:
                 yield i
         except Exception as e:
@@ -142,10 +143,10 @@ class Weibo2Kafuka(object):
             im = Image.open(img_path)
             width, height = im.size
             image_form = im.format
+            im.close()
         except Exception as e:
             mylogger_weibo.exception("error is %s", e)
         finally:
-            im.close()
             return size, width, height, image_form
 
     def save_image(self, img_list, user_id, article_id):
@@ -156,56 +157,70 @@ class Weibo2Kafuka(object):
         :return:
         '''
         retv_list = []
+        task_list = []
         if not user_id:
             user_id = "other_temp"
         if not os.path.exists(_env.SAVEDIRPATH):
             os.makedirs(_env.SAVEDIRPATH)
         for idx, url in enumerate(img_list):
-            try:
-                if not url:
-                    continue
-                temp_dict = {}
-                image_forth_dir = user_id
-                img_fmt = ".jpg"
-                if ".jpg" in url.lower():
-                    img_fmt = ".jpg"
-                elif ".gif" in url.lower():
-                    img_fmt = ".gif"
-                elif ".png" in url.lower():
-                    img_fmt = ".png"
-                imagename = self.hash_util(url) + ".jpg"
-                res = requests.get(url, verify=False)
-                up_path = "image/" + str(datetime.datetime.today().date()).replace("-", "/") + "/" + user_id + "/" + imagename
-                full_path = _env.SAVEDIRPATH + "/" + imagename
-                with open(full_path, 'wb') as f:
-                    f.write(res.content)
-                self.obs.uploadobject(up_path, full_path)
-                size, width, height, image_form = self.get_img_info(full_path)
-                if not width or not height:
-                    mylogger_weibo.info("img error id is %s url is %s", article_id, url)
-                    continue
-                param_1 = _env.OBJECT_STORE["default"]["IMAGE_SERVER_PLACEHODER"]
-                param_2 = _env.OBJECT_STORE["default"]["IMAGE_SECOND_DIR"]
-                param_3 = time.strftime("%Y/%m/%d")
-                param_4 = image_forth_dir
-                param_5 = imagename
-                new_src = "{0}/{1}/{2}/{3}/{4}".format(param_1,
-                                                       param_2,
-                                                       param_3,
-                                                       param_4,
-                                                       param_5)
-                temp_dict["old_src"] = url
-                temp_dict["status"] = 0 if res.status_code == 200 else 1
-                temp_dict["new_src"] = new_src
-                temp_dict["ranking_num"] = idx + 1
-                temp_dict["size"] = size
-                temp_dict["width"] = width
-                temp_dict["height"] = height
-                temp_dict["image_form"] = image_form
-                retv_list.append(temp_dict)
-            except Exception as e:
-                mylogger_weibo.exception("error is %s", e)
+            temp_number = idx + 1
+            temp_str = url + "||||" + str(temp_number) + "||||" + user_id + "||||" + article_id
+            task_list.append(temp_str.strip())
+        pool = ThreadPool()
+        retv_list = pool.map(self.downloader_and_up_img, task_list)
+        pool.close()
+        pool.join()
         return retv_list
+
+    def downloader_and_up_img(self, item):
+        retv_dict = {}
+        split_list = item.split("||||")
+        url = split_list[0]
+        article_id = split_list[3]
+        user_id = split_list[2]
+        ranking_num = int(split_list[1])
+        if not url:
+            return retv_dict
+        if not user_id:
+            user_id = "other_temp"
+        image_forth_dir = user_id
+        img_fmt = ".jpg"
+        if ".jpg" in url.lower():
+            img_fmt = ".jpg"
+        elif ".gif" in url.lower():
+            img_fmt = ".gif"
+        elif ".png" in url.lower():
+            img_fmt = ".png"
+        imagename = self.hash_util(url) + img_fmt
+        res = requests.get(url, verify=False)
+        up_path = "image/" + str(datetime.datetime.today().date()).replace("-", "/") + "/" + user_id + "/" + imagename
+        full_path = _env.SAVEDIRPATH + "/" + imagename
+        with open(full_path, 'wb') as f:
+            f.write(res.content)
+        self.obs.uploadobject(up_path, full_path)
+        size, width, height, image_form = self.get_img_info(full_path)
+        if not width or not height:
+            mylogger_weibo.info("img error id is %s url is %s", article_id, url)
+            return retv_dict
+        param_1 = _env.OBJECT_STORE["default"]["IMAGE_SERVER_PLACEHODER"]
+        param_2 = _env.OBJECT_STORE["default"]["IMAGE_SECOND_DIR"]
+        param_3 = time.strftime("%Y/%m/%d")
+        param_4 = image_forth_dir
+        param_5 = imagename
+        new_src = "{0}/{1}/{2}/{3}/{4}".format(param_1,
+                                               param_2,
+                                               param_3,
+                                               param_4,
+                                               param_5)
+        retv_dict["old_src"] = url
+        retv_dict["status"] = 0 if res.status_code == 200 else 1
+        retv_dict["new_src"] = new_src
+        retv_dict["ranking_num"] = ranking_num
+        retv_dict["size"] = size
+        retv_dict["width"] = width
+        retv_dict["height"] = height
+        retv_dict["image_form"] = image_form
+        return retv_dict
 
     def fomat_time_partial(self, content, **kwargs):
         '''
@@ -357,18 +372,19 @@ class Weibo2Kafuka(object):
 
 
 if __name__ == '__main__':
-    w2k = Weibo2Kafuka()
-    # print(mongo_db.fomat_time_partial("昨天 11:53"))
-    today_str = str(datetime.datetime.today().date()).replace("-", "_")
-    collection_name = "weiboCreateByShark_weiboSpider_weibo_shark_%s" % today_str
-    collection_name = "weiboCreateByShark_weiboSpider_shark_2018_04_22"
     while True:
+        w2k = Weibo2Kafuka()
+        # print(mongo_db.fomat_time_partial("昨天 11:53"))
+        today_str = str(datetime.datetime.today().date()).replace("-", "_")
+        collection_name = "weiboCreateByShark_weiboSpider_weibo_shark_%s" % today_str
+        collection_name = "weiboCreateByShark_weiboSpider_shark_2018_04_22"
         res = w2k.get_item(collection_name)
         for i in res:
             temp_status = True
             item = w2k.change(i)
             if not item:
                 mylogger_weibo.info("weibo info in redis id is %s", str(i["_id"]))
+                w2k.update(i["_id"], collection_name)
                 continue
             for key in _env.post_detail_must_key_list:
                 if not item[key]:
