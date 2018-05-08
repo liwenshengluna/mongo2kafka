@@ -81,7 +81,7 @@ class News2Kafuka(object):
             with open(_env.READ_FILE_DIR + file_name, "r") as f:
                 reader = csv.reader(f)
                 for row in reader:
-                    if len(row) < 10:
+                    if len(row) != 11:
                         continue
                     retv_dict = {}
                     title = ""
@@ -111,6 +111,8 @@ class News2Kafuka(object):
                     retv_dict["content"] = re.sub("\ufeff", "", content.strip())
                     retv_dict["content"] = re.sub("\n", "</br>", retv_dict["content"])
                     retv_dict["webpage_url"] = re.sub("\ufeff", "", webpage_url.strip())
+                    retv_dict["meta_info_key"] = parse_domain(retv_dict["webpage_url"], 2)
+                    retv_dict["wechat_name"] = row[10]
                     r_w = self._redis_14.hsetnx(_env.REDIS_DISTINCT_KEY, retv_dict["webpage_url"], time.strftime("%Y-%m-%d %H:%M:%S"))
                     if r_w == 0:
                         continue
@@ -161,7 +163,6 @@ if __name__ == '__main__':
                         except Exception as e:
                             mylogger_news.exception("error is %s", e)
                         mylogger_news.info("send kafuka sucess webpage_code is %s", item["webpage_code"])
-                        time.sleep(0.1)
                     except Exception as e:
                         mylogger_news.exception("error is %s", e)
             os.system("mv %s %s " % (_env.READ_FILE_DIR + i, _env.BACKUP_FILE_DIR))
