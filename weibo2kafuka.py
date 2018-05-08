@@ -16,7 +16,8 @@ import hashlib
 import socket
 import os
 import time
-from multiprocessing.dummy import Pool as ThreadPool
+# from multiprocessing.dummy import Pool as ThreadPool
+from multiprocessing import Pool
 
 from PIL import Image
 import pymongo
@@ -29,6 +30,57 @@ from settings import get_settings_environment
 _env = get_settings_environment("pro")
 mylogger_weibo = _env.mylogger_weibo
 
+def downloader_and_up_img(item):
+
+    w = Weibo2Kafuka()
+    retv_dict = {}
+    split_list = item.split("||||")
+    url = split_list[0]
+    article_id = split_list[3]
+    user_id = split_list[2]
+    ranking_num = int(split_list[1])
+    if not url:
+        return retv_dict
+    if not user_id:
+        user_id = "other_temp"
+    image_forth_dir = user_id
+    img_fmt = ".jpg"
+    if ".jpg" in url.lower():
+        img_fmt = ".jpg"
+    elif ".gif" in url.lower():
+        img_fmt = ".gif"
+    elif ".png" in url.lower():
+        img_fmt = ".png"
+    imagename = w.hash_util(url) + img_fmt
+    res = requests.get(url, verify=False)
+    up_path = "image/" + str(datetime.datetime.today().date()).replace("-", "/") + "/" + user_id + "/" + imagename
+    full_path = _env.SAVEDIRPATH + "/" + imagename
+    with open(full_path, 'wb') as f:
+        f.write(res.content)
+    w.obs.uploadobject(up_path, full_path)
+    size, width, height, image_form = w.get_img_info(full_path)
+    if not width or not height:
+        mylogger_weibo.info("img error id is %s url is %s", article_id, url)
+        return retv_dict
+    param_1 = _env.OBJECT_STORE["default"]["IMAGE_SERVER_PLACEHODER"]
+    param_2 = _env.OBJECT_STORE["default"]["IMAGE_SECOND_DIR"]
+    param_3 = time.strftime("%Y/%m/%d")
+    param_4 = image_forth_dir
+    param_5 = imagename
+    new_src = "{0}/{1}/{2}/{3}/{4}".format(param_1,
+                                           param_2,
+                                           param_3,
+                                           param_4,
+                                           param_5)
+    retv_dict["old_src"] = url
+    retv_dict["status"] = 0 if res.status_code == 200 else 1
+    retv_dict["new_src"] = new_src
+    retv_dict["ranking_num"] = ranking_num
+    retv_dict["size"] = size
+    retv_dict["width"] = width
+    retv_dict["height"] = height
+    retv_dict["image_form"] = image_form
+    return retv_dict
 
 class Weibo2Kafuka(object):
     '''
@@ -166,8 +218,11 @@ class Weibo2Kafuka(object):
             temp_number = idx + 1
             temp_str = url + "||||" + str(temp_number) + "||||" + user_id + "||||" + article_id
             task_list.append(temp_str.strip())
-        pool = ThreadPool()
-        retv_list = pool.map(self.downloader_and_up_img, task_list)
+        # pool = Pool(len(task_list))
+        pool = Pool(6)
+        for i in range(len(task_list)):
+            res=pool.apply_async(downloader_and_up_img, args=(task_list[i],))
+            retv_list.append(res.get())
         pool.close()
         pool.join()
         return retv_list
@@ -337,7 +392,8 @@ class Weibo2Kafuka(object):
         else:
             img_group_list = []
         if len(img_group_list) >= 2:
-            retv_item["content"] = retv_item["content"] + "<div id='uec_img_smsg'></div>"
+            #retv_item["content"] = retv_item["content"] + "<div id='uec_img_smsg'></div>"
+            pass
         user_id = item.get("def17")
         retv_item["meta_info_key"] = user_id
         retv_item["meta_text"] = self._redis_1.get(user_id) if self._redis_1.get(user_id) else ""
@@ -351,7 +407,7 @@ class Weibo2Kafuka(object):
             retv_item["image_status"] = 0
         retv_item["no_tag_content"] = re.sub("<.*?>", "", retv_item["content"])
         retv_item["webpage_code"] = self.hash_util(retv_item["webpage_url"])
-        self.process_image(img_group_list, i, retv_item["webpage_code"], retv_item["image_status"])
+        # self.process_image(img_group_list, i, retv_item["webpage_code"], retv_item["image_status"])
         retv_item["release_datetime"] = self.fomat_time_partial(item["def5"].strip())
         retv_item["source_crawl"] = "微博"
         retv_item["source_report"] = item.get("def4", "")
@@ -395,9 +451,13 @@ if __name__ == '__main__':
                 if not w2k.update(i["_id"], collection_name):
                     mylogger_weibo.info("update fail id is %s", str(i["_id"]))
                 continue
-            if not w2k.send_kafuka(_env.KAFKA_TOPICS["default"]["KAFUKA_TOPIC_WEBPAGE"], json.dumps(item)):
-                mylogger_weibo.info("send kafuka fail -----> id is %s", str(i["_id"]))
+            try:
+                if not w2k.send_kafuka(_env.KAFKA_TOPICS["default"]["KAFUKA_TOPIC_WEBPAGE"], json.dumps(item)):
+                    mylogger_weibo.info("send kafuka fail -----> id is %s", str(i["_id"]))
+            except Exception as e:
+                mylogger_weibo.exception("error is %s id is %s", e, str(i["_id"]))
             mylogger_weibo.info("send kafuka sucess webpage_code is %s id is %s", item["webpage_code"], str(i["_id"]))
             if not w2k.update(i["_id"], collection_name):
                 mylogger_weibo.info("update fail id is %s", str(i["_id"]))
+            time.sleep(0.1)
         time.sleep(20)

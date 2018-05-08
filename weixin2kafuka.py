@@ -331,7 +331,7 @@ if __name__ == '__main__':
                     mylogger_weixin.info("send kafuka sucess webpage_code is %s", item["webpage_code"])
                     if not w2k.update(i["_id"], collection_name):
                         mylogger_weixin.info("update fail id is %s", str(i["_id"]))
-                    time.sleep(0.1)
+                    # time.sleep(0.05)
                 except Exception as e:
                     mylogger_weixin.exception("error is %s", e)
         time.sleep(20)

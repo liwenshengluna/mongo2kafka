@@ -22,7 +22,7 @@ class BaseConfig(object):
     ch = logging.StreamHandler()
     ch.setFormatter(logging.Formatter(log_format))
     ch.setLevel(logging.INFO)
-    mylogger_weibo.addHandler(ch)
+    #mylogger_weibo.addHandler(ch)
     mylogger_weixin.addHandler(ch)
     mylogger_news.addHandler(ch)
 
