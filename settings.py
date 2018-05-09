@@ -176,7 +176,7 @@ class ProductionConfig(BaseConfig):
         "db_distinct": "13",
         "password": "iNews2018!",
     }
-    KAFUKA_HOST = " 192.168.1.15:19092,192.168.1.114:19092,192.168.1.223:19092"
+    KAFUKA_HOST = "192.168.1.15:19092,192.168.1.114:19092,192.168.1.223:19092"
 
 
 class DevelopmentConfig(BaseConfig):
