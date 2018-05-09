@@ -22,7 +22,7 @@ class BaseConfig(object):
     ch = logging.StreamHandler()
     ch.setFormatter(logging.Formatter(log_format))
     ch.setLevel(logging.INFO)
-    #mylogger_weibo.addHandler(ch)
+    mylogger_weibo.addHandler(ch)
     mylogger_weixin.addHandler(ch)
     mylogger_news.addHandler(ch)
 
@@ -159,9 +159,9 @@ class ProductionConfig(BaseConfig):
     MONGO_CONFIG = {
         "host": "114.115.148.216",
         "port": 27025,
-        "db": "irobot_new",
-        "user": "crawler",
-        "passwd": "test",
+        "db": "irobot",
+        "user": "irobot",
+        "passwd": "irobot",
 
         "host_weixin": "114.115.148.216",
         "user_weixin": "irobot",

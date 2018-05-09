@@ -22,7 +22,8 @@ class Kafka_producer():
                 parmas_message = params
             else:
                 parmas_message = json.dumps(params)
-            self.producer.send(kafkatopic, parmas_message.encode('utf-8', 'ignore'))
+            # self.producer.send(kafkatopic, parmas_message.encode('utf-8', 'ignore'))
+            self.producer.send(kafkatopic, parmas_message)
             self.producer.flush()
         except:
             raise KafkaError("send message to kafka error")

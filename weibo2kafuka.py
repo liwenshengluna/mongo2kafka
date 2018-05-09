@@ -66,10 +66,9 @@ class Weixin2Kafuka(object):
             _collection = self.mongo.get_collection(name=collection)
             res_cursor = _collection.find({"flag": 0}, no_cursor_timeout=True)
             for i in res_cursor:
-                yield i 
+                yield i
         except Exception as e:
             mylogger_weibo.exception("error is %s", e)
-        # return res_cursor
 
     def update(self, _id, collection):
         '''
@@ -112,6 +111,7 @@ class Weixin2Kafuka(object):
                     continue
                 temp_dict = {}
                 temp_dict["old_src"] = url
+                temp_dict["new_src"] = url
                 temp_dict["status"] = 2
                 temp_dict["ranking_num"] = idx + 1
                 retv_list.append(temp_dict)
@@ -143,7 +143,7 @@ class Weixin2Kafuka(object):
         retv_dict["parent_id"] = ""
         retv_dict["webpage_code"] = webpage_code
         retv_dict["cache_server"] = socket.gethostname()
-        retv_dict["crawl_datetime"] = item["spiderTime"]
+        retv_dict["crawl_datetime"] = item["crawl_datetime"]
         retv_dict["status"] = status
         retv_dict["media_type"] = 0
         retv_dict["div_id"] = "uec_img_smsg"
@@ -182,10 +182,9 @@ class Weixin2Kafuka(object):
     def change(self, item):
         retv_item = {}
         retv_item["content"] = item.get("content", "")
-        retv_item["title"] = item.get("title", "")
         img_group_list = item.get("image_lists", [])
-        # if len(img_group_list) > 0:
-        #     retv_item["content"] = retv_item["content"] + "<div id=uec_img_smsg></div>"
+        if len(img_group_list) > 0:
+            retv_item["content"] = retv_item["content"] + "<div id=uec_img_smsg></div>"
         retv_item["meta_info_key"] = item.get("meta_info_key", "")
         retv_item["meta_text"] = self._redis_1.get(retv_item["meta_info_key"]) if self._redis_1.get(retv_item["meta_info_key"]) else ""
         retv_item["webpage_url"] = item.get("webpage_url", "")
@@ -197,7 +196,11 @@ class Weixin2Kafuka(object):
         else:
             retv_item["image_status"] = 0
         retv_item["no_tag_content"] = item.get("no_tag_content", "")
-        retv_item["webpage_code"] = retv_item["webpage_code"]
+        if len(item.get("no_tag_content", "")) > 40:
+            retv_item["title"] = item.get("no_tag_content", "")[0:40]
+        else:
+            retv_item["title"] = item.get("no_tag_content", "")
+        retv_item["webpage_code"] = item["webpage_code"]
         new_image_list = []
         for one_item in img_group_list:
             img_url = one_item.get("large", {}).get("url", "")
@@ -208,10 +211,13 @@ class Weixin2Kafuka(object):
         if item.get("page_info", {}).get("type", "") == "video":
             video_list.append(item["page_info"])
         self.process_video(video_list, item)
-        # if video_list:
-        #     retv_item["content"] = retv_item["content"] + "<div id=></div>"
+        if video_list:
+            retv_item["content"] = retv_item["content"] + "<div id=uec_embedded_video_0></div>"
         retv_item["release_datetime"] = item.get("release_datetime", "")
         retv_item["wechat_name"] = item.get("wechat_name", "")
+        retv_item["original_id"] = item.get("original_id", "")
+        retv_item["original_parent_id"] = item.get("original_parent_id", "")
+        retv_item["original_relation_id"] = item.get("original_relation_id", "")
         retv_item["crawl_datetime"] = item.get("crawl_datetime", "")
         retv_item["source_report"] = item.get("source_report", "")
         retv_item["region"] = item.get("region", "")
@@ -222,7 +228,7 @@ class Weixin2Kafuka(object):
         retv_item["vote"] = int(item["vote"]) if item["vote"] else 0
         retv_item["against"] = int(item["against"]) if item["against"] else 0
         retv_item["browse_num"] = int(item["browse_num"]) if item["browse_num"] else 0
-        retv_item["is_deleted"] = int(item["is_deleted"]) if item["is_deleted"] else 0
+        retv_item["is_deleted"] = 0
         if video_list:
             retv_item["video_status"] = 2
         else:
@@ -265,7 +271,7 @@ if __name__ == '__main__':
                     mylogger_weibo.info("send kafuka sucess webpage_code is %s", item["webpage_code"])
                     if not w2k.update(i["_id"], collection_name):
                         mylogger_weibo.info("update fail id is %s", str(i["_id"]))
-                    # time.sleep(0.05)
+                    time.sleep(0.1)
                 except Exception as e:
                     mylogger_weibo.exception("error is %s", e)
         time.sleep(20)
