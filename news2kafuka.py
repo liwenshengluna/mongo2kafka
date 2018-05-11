@@ -107,6 +107,8 @@ class News2Kafuka(object):
                     retv_dict["editor"] = re.sub("\ufeff", "", editor.strip())
                     retv_dict["source_report"] = re.sub("\ufeff", "", source_report.strip())
                     retv_dict["release_datetime"] = re.sub("\ufeff", "", release_datetime.strip())
+                    if not retv_dict["release_datetime"] or retv_dict["release_datetime"] == 'null':
+                        retv_dict["release_datetime"] = datetime.datetime.today().strftime('%Y-%m-%d %H:%M:%S')
                     retv_dict["no_tag_content"] = re.sub("\ufeff", "", no_tag_content.strip())
                     retv_dict["content"] = re.sub("\ufeff", "", content.strip())
                     retv_dict["content"] = re.sub("\n", "</br>", retv_dict["content"])
