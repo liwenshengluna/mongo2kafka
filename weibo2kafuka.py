@@ -218,7 +218,8 @@ class Weixin2Kafuka(object):
         retv_item["original_id"] = item.get("original_id", "")
         retv_item["original_parent_id"] = item.get("original_parent_id", "")
         retv_item["original_relation_id"] = item.get("original_relation_id", "")
-        retv_item["crawl_datetime"] = item.get("crawl_datetime", "")
+        # retv_item["crawl_datetime"] = item.get("crawl_datetime", "")
+        retv_item["crawl_datetime"] = datetime.datetime.today().strftime('%Y-%m-%d %H:%M:%S')
         retv_item["source_report"] = item.get("source_report", "")
         retv_item["region"] = item.get("region", "")
         retv_item["reposts_num"] = int(item["reposts_num"]) if item["reposts_num"] else 0
@@ -271,7 +272,7 @@ if __name__ == '__main__':
                     mylogger_weibo.info("send kafuka sucess webpage_code is %s", item["webpage_code"])
                     if not w2k.update(i["_id"], collection_name):
                         mylogger_weibo.info("update fail id is %s", str(i["_id"]))
-                    time.sleep(0.1)
+                    time.sleep(0.05)
                 except Exception as e:
                     mylogger_weibo.exception("error is %s", e)
         time.sleep(20)

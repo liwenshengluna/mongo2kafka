@@ -157,7 +157,7 @@ class ProductionConfig(BaseConfig):
     线上正式环境配置
     '''
     MONGO_CONFIG = {
-        "host": "114.115.148.216",
+        "host": ["192.168.1.58","192.168.1.70","192.168.1.193"],
         "port": 27025,
         "db": "irobot",
         "user": "irobot",

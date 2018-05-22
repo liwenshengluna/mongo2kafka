@@ -324,10 +324,18 @@ if __name__ == '__main__':
                             mylogger_weixin.info("update fail id is %s", str(i["_id"]))
                         continue
                     try:
-                        if not w2k.send_kafuka(_env.KAFKA_TOPICS["default"]["KAFUKA_TOPIC_WEBPAGE"], json.dumps(item)):
-                            mylogger_weixin.info("send kafuka fail -----> id is %s", str(i["_id"]))
+                        for key in item:
+                            if isinstance(item[key], unicode):
+                                item[key] = item[key].encode("utf8", errors='ignore')
+                            if isinstance(item[key], str):
+                                item[key] = item[key].decode("utf8", errors='ignore').encode("utf8", errors='ignore')
+                        w2k.send_kafuka(_env.KAFKA_TOPICS["default"]["KAFUKA_TOPIC_WEBPAGE"], json.dumps(item))
+                        if item["meta_info_key"] == "MzA4ODI3MTUwMg==" or item["meta_info_key"] == "MzAxMjQ5NDUxNg==":
+                            w2k.send_kafuka(_env.KAFKA_TOPICS["default"]["KAFUKA_TOPIC_TOPLIST"], json.dumps(item))
                     except Exception as e:
                         mylogger_weixin.exception("error is %s id is %s", e, str(i["_id"]))
+                        mylogger_weixin.info("send kafuka fail -----> id is %s", str(i["_id"]))
+                        continue
                     mylogger_weixin.info("send kafuka sucess webpage_code is %s", item["webpage_code"])
                     if not w2k.update(i["_id"], collection_name):
                         mylogger_weixin.info("update fail id is %s", str(i["_id"]))
