@@ -267,9 +267,9 @@ class Weixin2Kafuka(object):
         retv_item["meta_info_key"] = item.get("biz", "")
         retv_item["meta_text"] = self._redis_1.get(retv_item["meta_info_key"]) if self._redis_1.get(retv_item["meta_info_key"]) else ""
         retv_item["webpage_url"] = item.get("webpage_url", "")
-        r_w = self._redis_14.hsetnx(_env.REDIS_DISTINCT_KEY, retv_item["webpage_url"], time.strftime("%Y-%m-%d %H:%M:%S"))
-        if r_w == 0:
-            return None
+        #r_w = self._redis_14.hsetnx(_env.REDIS_DISTINCT_KEY, retv_item["webpage_url"], time.strftime("%Y-%m-%d %H:%M:%S"))
+        #if r_w == 0:
+        #    return None
         if len(img_group_list) > 0:
             retv_item["image_status"] = 1
         else:
