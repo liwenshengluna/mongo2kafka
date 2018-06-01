@@ -275,4 +275,4 @@ if __name__ == '__main__':
                     time.sleep(0.05)
                 except Exception as e:
                     mylogger_weibo.exception("error is %s", e)
-        time.sleep(20)
+        time.sleep(2)
